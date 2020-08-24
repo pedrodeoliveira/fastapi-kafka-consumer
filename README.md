@@ -1,0 +1,1 @@
+# FastAPI with Kafka Consumer
