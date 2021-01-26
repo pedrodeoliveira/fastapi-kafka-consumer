@@ -2,11 +2,11 @@ from aiokafka import AIOKafkaProducer
 import asyncio
 import json
 import os
+from random import randint
 
 
 # env variables
 KAFKA_TOPIC = os.getenv('KAFKA_TOPIC')
-KAFKA_CONSUMER_GROUP_PREFIX = os.getenv('KAFKA_CONSUMER_GROUP_PREFIX')
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
 
 # global variables
@@ -19,7 +19,9 @@ async def send_one():
     await producer.start()
     try:
         # produce message
-        value = {'status': 'ready'}
+        msg_id = f'{randint(1, 10000)}'
+        value = {'message_id': msg_id, 'text': 'some text', 'state': randint(1, 100)}
+        print(f'Sending message with value: {value}')
         value_json = json.dumps(value).encode('utf-8')
         await producer.send_and_wait(KAFKA_TOPIC, value_json)
     finally:

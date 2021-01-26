@@ -1,5 +1,5 @@
 from random import randint
-from typing import Set
+from typing import Set, Any
 from fastapi import FastAPI
 from kafka import TopicPartition
 
@@ -17,10 +17,11 @@ app = FastAPI()
 # global variables
 consumer_task = None
 consumer = None
+_state = 0
 
 # env variables
 KAFKA_TOPIC = os.getenv('KAFKA_TOPIC')
-KAFKA_CONSUMER_GROUP_PREFIX = os.getenv('KAFKA_CONSUMER_GROUP_PREFIX')
+KAFKA_CONSUMER_GROUP_PREFIX = os.getenv('KAFKA_CONSUMER_GROUP_PREFIX', 'group')
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
 
 # initialize logger
@@ -46,6 +47,11 @@ async def shutdown_event():
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.get("/state")
+async def state():
+    return {"state": _state}
 
 
 async def initialize():
@@ -80,6 +86,9 @@ async def initialize():
         consumer.seek(tp, end_offset-1)
         msg = await consumer.getone()
         log.info(f'Initializing API with data from msg: {msg}')
+
+        # update the API state
+        _update_state(msg)
         return
 
 
@@ -94,10 +103,19 @@ async def send_consumer_message(consumer):
         async for msg in consumer:
             # x = json.loads(msg.value)
             log.info(f"Consumed msg: {msg}")
+
+            # update the API state
+            _update_state(msg)
     finally:
         # will leave consumer group; perform autocommit if enabled
         log.warning('Stopping consumer')
         await consumer.stop()
+
+
+def _update_state(message: Any) -> None:
+    value = json.loads(message.value)
+    global _state
+    _state = value['state']
 
 
 if __name__ == "__main__":
