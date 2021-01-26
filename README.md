@@ -14,18 +14,16 @@ new model.
 
 ## Technologies
 
-The implementation was done in `python>=3.7` using the web framework `fastapi` and for 
+The implementation was done in `python>=3.7` using the web framework `fastapi`, and for 
 interacting with **Kafka** the `aiokafka` library was chosen. The latter fits very well
 within an `async` framework like `fastapi` is.
 
 ## How to Run
 
-First, step will be to have **Kafka** broker and zookeeper running, by default it expects
-the bootstrap server to be running on `localhost:9092`. This can be changed using the 
+The first step will be to have **Kafka** broker and zookeeper running, by default the bootstrap server is expected to be running on `localhost:9092`. This can be changed using the 
 environment variable `KAFKA_BOOTSTRAP_SERVERS`. 
 
-Next, the following environment variable `KAFKA_TOPIC` should be defined with desired 
-name for this topic.
+Next, the following environment variable `KAFKA_TOPIC` should be defined with desired for the topic used to send messages.
 
 ```bash
 $ export KAFKA_TOPIC=<my_topic>
@@ -49,7 +47,7 @@ $ python producer.py
 <details>
     <summary>Result</summary>
 
-    ```bash
+    ```
     Sending message with value: {'message_id': '4142', 'text': 'some text', 'state': 96}
     ```
 
@@ -60,14 +58,14 @@ The producer sends a message with a field `state` that is used in this demonstra
 showing how the state of the Web API can be updated. One can confirm that the state of the
 Web API is being updated by performing a `GET` request on the `/state` endpoint.
 
-```bash
+```
 curl http://localhost:8000/state
 ```
 
 <details>
     <summary>Result before sending message</summary>
 
-    ```bash
+    ```
     {"state":0}
     ```
 
@@ -76,7 +74,7 @@ curl http://localhost:8000/state
 <details>
     <summary>Result after sending message</summary>
 
-    ```bash
+    ```
     {"state":23}
     ```    
     The actual value will vary given it's a random number.
@@ -85,9 +83,9 @@ curl http://localhost:8000/state
 
 ## Consumer Initialization
 
-During the initialization process of the Consumer the log end offset is checked to determine whether we already have messages in the topic. If so, consumer will *seek* to this offset so that it can read the last message committed in this kafka topic.
+During the initialization process of the Consumer the log end offset is checked to determine whether there are messages already in the topic. If so, the consumer will *seek* to this offset so that it can read the last committed message in this topic.
 
- This is useful to guarantee that the consumer does not miss on previously published messages, either because they were published before the consumer was up, or because the Web API has been down for some time. For this use case, we consider that only the most recent `state` matters, and thereby, we only care about the last committed message.
+This is useful to guarantee that the consumer does not miss on previously published messages, either because they were published before the consumer was up, or because the Web API has been down for some time. For this use case, we consider that only the most recent `state` matters, and thereby, we only care about the last committed message.
 
 Each instance of the Web API will have it's own consumer group (they share the same group name prefix + a random id), so that each instance of the API receives the same state updates.
   
